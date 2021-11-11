@@ -9,8 +9,17 @@ import (
 	"github.com/shirou/gopsutil/v3/mem"
 )
 
+type Alignment int
+
+const (
+	Left Alignment = 0
+	Center
+	Right
+)
+
 type Module struct {
 	Name string
+	Align Alignment 
 	Content string
 }
 
@@ -70,13 +79,10 @@ func RenderStatus(renderChannel chan Module[]) {
 	modules := map[string]Module
 
 	for {
-		select {
-			case <- modules:
-				// update modified modules
-				// print the status bar
-			default:
-				// wait...
-		}
+		updatedModules := <- modules:
+
+		// update modified modules
+		// print the status bar
 	}
 }
 
