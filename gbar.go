@@ -12,14 +12,16 @@ import (
 type Alignment int
 
 const (
-	Left Alignment = 0
+	Left Alignment = iota
 	Center
 	Right
+	None
 )
 
 type Module struct {
+	ID int
 	Name string
-	Align Alignment 
+	Align Alignment
 	Content string
 }
 
@@ -31,21 +33,28 @@ func Button(text string, command string) {
 	fmt.Printf("%%{A:%s:}%s%%{A}", command, text)
 }
 
-func AlignLeft() {
-	fmt.Print("%{l}")
+func Statistics(renderChannel chan []Module) {
+	systemStats := Module{ ID: 0, Name: "CPU_RAM", Align: Left, Content: "Default" }
+	date := Module{ ID: 1, Name: "Date", Align: Center, Content: "Default" }
 
-	times, _ := cpu.Percent(0, false)
-	cpuUsage := times[0]
+	for {
+		times, _ := cpu.Percent(0, false)
+		cpuUsage := times[0]
 
-	memory, _ := mem.VirtualMemory()
+		memory, _ := mem.VirtualMemory()
 
-	fmt.Printf(" [CPU: %.2f%%] [RAM: %.2f%%]", cpuUsage, memory.UsedPercent)
-}
+		systemStats.Content = fmt.Sprintf("[CPU: %.2f%%] [RAM: %.2f%%]", cpuUsage, memory.UsedPercent)
 
-func AlignCenter() {
-	fmt.Print("%{c}")
-	currentTime := time.Now()
-	fmt.Print(currentTime.Format("[Monday, January 2] [3:04:05 PM]"))
+		currentTime := time.Now()
+		date.Content = fmt.Sprintf(currentTime.Format("[Monday, January 2] [3:04:05 PM]"))
+
+		copyModules := make([]Module, 2)
+		copyModules[0] = systemStats
+		copyModules[1] = date
+		renderChannel <- copyModules
+
+		time.Sleep(time.Second)
+	}
 }
 
 func AlignRight() {
@@ -66,34 +75,75 @@ func AlignRight() {
 }
 
 func Process() {
-	AlignLeft()
-	AlignCenter()
-	AlignRight()
+//	AlignLeft()
+//	AlignCenter()
+//	AlignRight()
 
 	// flush the buffers
+//	fmt.Println()
+}
+
+// given a list of modules, renders their text with alignment
+func RenderModules(modules []Module) {
+	var alignment Alignment = None
+
+	for i := 0; i < len(modules); i++ {
+		if modules[i].Align != alignment {
+			alignment = modules[i].Align
+			switch modules[i].Align {
+			case Left:
+				fmt.Print("%{l}")
+			case Center:
+				fmt.Print("%{c}")
+			case Right:
+				fmt.Print("%{r}")
+			}
+		}
+		fmt.Print(modules[i].Content)
+	}
+
 	fmt.Println()
 }
 
-func RenderStatus(renderChannel chan Module[]) {
+func RenderStatus(renderChannel chan []Module, config []Module) {
 	// date => { name: "date", content: "Feb 1 2021" }
-	modules := map[string]Module
+	var modules []Module
+
+	for i := 0; i < len(config); i++ {
+		modules = append(modules, config[i])
+	}
+
+	RenderModules(modules)
 
 	for {
-		updatedModules := <- modules:
+		updatedModules := <-renderChannel
 
-		// update modified modules
-		// print the status bar
+		for _, module := range updatedModules {
+			modules[module.ID] = module
+		}
+
+		RenderModules(modules)
 	}
 }
 
 func main() {
-	renderChannel := make(chan Module[])
+	renderChannel := make(chan []Module)
 
-	go RenderStatus(renderChannel)
-
-	for {
-		SetBackground("#162424")
-		Process()
-		time.Sleep(time.Second)
+	/*
+		In the RenderStatus goroutine, it will replace any of the existing blocks 
+		with ones that it receives. So, by populating it beforehand we can ensure 
+		that the ordering is correct
+	*/
+	configuration := []Module {
+		Module{ ID: 0, Name: "CPU", Align: Left, Content: "cpu stuff" },
+		Module{ ID: 1, Name: "Date", Align: Center, Content: "date stuff" },
+		Module{ ID: 2, Name: "Workspace", Align: Right, Content: "workspace" },
 	}
+
+	go RenderStatus(renderChannel, configuration)
+	go Statistics(renderChannel)
+
+	select { }
+
+	return
 }
