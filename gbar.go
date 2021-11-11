@@ -74,15 +74,6 @@ func AlignRight() {
 	Button("[App Launcher] ", "rofi -show drun")
 }
 
-func Process() {
-//	AlignLeft()
-//	AlignCenter()
-//	AlignRight()
-
-	// flush the buffers
-//	fmt.Println()
-}
-
 // given a list of modules, renders their text with alignment
 func RenderModules(modules []Module) {
 	var alignment Alignment = None
@@ -105,6 +96,7 @@ func RenderModules(modules []Module) {
 	fmt.Println()
 }
 
+/* Renders the status bar once it receives updated modules */
 func RenderStatus(renderChannel chan []Module, config []Module) {
 	// date => { name: "date", content: "Feb 1 2021" }
 	var modules []Module
@@ -141,6 +133,8 @@ func main() {
 	}
 
 	go RenderStatus(renderChannel, configuration)
+
+	/* generate each module's status concurrently */
 	go Statistics(renderChannel)
 
 	select { }
