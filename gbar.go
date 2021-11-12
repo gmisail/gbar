@@ -45,7 +45,7 @@ func Statistics(renderChannel chan []Module) {
 
 		memory, _ := mem.VirtualMemory()
 
-		systemStats.Content = fmt.Sprintf("[ %.2f%%] [\uf538 %.2f%%]", cpuUsage, memory.UsedPercent)
+		systemStats.Content = fmt.Sprintf("%%{B#D6E3F8}%%{F#000000} CPU: %.2f%% %%{B-}%%{F-}%%{B#FEF5EF}%%{F#000000} RAM: %.2f%% %%{B-}%%{F-}", cpuUsage, memory.UsedPercent)
 
 		currentTime := time.Now()
 		date.Content = fmt.Sprintf(currentTime.Format("[Monday, January 2] [3:04:05 PM]"))
@@ -145,7 +145,7 @@ func RenderModules(modules []Module) {
 			alignment = modules[i].Align
 			switch modules[i].Align {
 			case Left:
-				fmt.Print("%{l} ")
+				fmt.Print("%{l}")
 			case Center:
 				fmt.Print("%{c}")
 			case Right:
