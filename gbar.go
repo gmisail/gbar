@@ -105,8 +105,6 @@ func RenderStatus(renderChannel chan []Module, config []Module) {
 		modules = append(modules, config[i])
 	}
 
-	RenderModules(modules)
-
 	for {
 		updatedModules := <-renderChannel
 
