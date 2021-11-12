@@ -48,7 +48,7 @@ func Statistics(renderChannel chan []Module) {
 		systemStats.Content = fmt.Sprintf("%%{B#D6E3F8}%%{F#000000}  %.2f%% %%{B-}%%{F-}%%{B#FEF5EF}%%{F#000000}  %.2f%% %%{B-}%%{F-}", cpuUsage, memory.UsedPercent)
 
 		currentTime := time.Now()
-		date.Content = fmt.Sprintf(currentTime.Format("[Monday, January 2] [3:04:05 PM]"))
+		date.Content = fmt.Sprintf(currentTime.Format(" Monday, January 2  3:04:05 PM"))
 
 		copyModules := make([]Module, 2)
 		copyModules[0] = systemStats
