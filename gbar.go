@@ -45,7 +45,7 @@ func Statistics(renderChannel chan []Module) {
 
 		memory, _ := mem.VirtualMemory()
 
-		systemStats.Content = fmt.Sprintf("%%{B#D6E3F8}%%{F#000000} CPU: %.2f%% %%{B-}%%{F-}%%{B#FEF5EF}%%{F#000000} RAM: %.2f%% %%{B-}%%{F-}", cpuUsage, memory.UsedPercent)
+		systemStats.Content = fmt.Sprintf("%%{B#D6E3F8}%%{F#000000}  %.2f%% %%{B-}%%{F-}%%{B#FEF5EF}%%{F#000000}  %.2f%% %%{B-}%%{F-}", cpuUsage, memory.UsedPercent)
 
 		currentTime := time.Now()
 		date.Content = fmt.Sprintf(currentTime.Format("[Monday, January 2] [3:04:05 PM]"))
@@ -60,7 +60,7 @@ func Statistics(renderChannel chan []Module) {
 }
 
 func CurrentWorkspace(renderChannel chan []Module) {
-	occupiedWorkspace := ""
+//	occupiedWorkspace := ""
 	//emptyWorkspace := "_"
 
 	workspaceIds, _ := exec.Command("bspc", "query", "-D").Output()
@@ -95,9 +95,13 @@ func CurrentWorkspace(renderChannel chan []Module) {
 		currentWorkspace := workspaces[workspaceEvent[2]]
 
 		workspace.Content = ""
-//		for i := 0; i < len(workspaces); i++ {
-			workspace.Content = fmt.Sprintf("%s %d ", occupiedWorkspace, currentWorkspace)
-//		}
+		for i := 0; i < len(workspaces) - 1; i++ {
+			if i == currentWorkspace {
+				workspace.Content += " "
+			} else {
+				workspace.Content += " "
+			}
+		}
 
 		modules[0] = workspace
 		renderChannel <- modules
