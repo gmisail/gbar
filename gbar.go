@@ -45,7 +45,7 @@ func Statistics(renderChannel chan []Module) {
 
 		memory, _ := mem.VirtualMemory()
 
-		systemStats.Content = fmt.Sprintf("[CPU: %.2f%%] [RAM: %.2f%%]", cpuUsage, memory.UsedPercent)
+		systemStats.Content = fmt.Sprintf("[ %.2f%%] [\uf538 %.2f%%]", cpuUsage, memory.UsedPercent)
 
 		currentTime := time.Now()
 		date.Content = fmt.Sprintf(currentTime.Format("[Monday, January 2] [3:04:05 PM]"))
@@ -60,6 +60,9 @@ func Statistics(renderChannel chan []Module) {
 }
 
 func CurrentWorkspace(renderChannel chan []Module) {
+	occupiedWorkspace := ""
+	//emptyWorkspace := "_"
+
 	workspaceIds, _ := exec.Command("bspc", "query", "-D").Output()
 	workspacesList := strings.Split(string(workspaceIds), "\n")
 
@@ -90,7 +93,12 @@ func CurrentWorkspace(renderChannel chan []Module) {
 
 		// look up which desktop the new ID belongs to
 		currentWorkspace := workspaces[workspaceEvent[2]]
-		workspace.Content = fmt.Sprintf("[%d]", currentWorkspace)
+
+		workspace.Content = ""
+//		for i := 0; i < len(workspaces); i++ {
+			workspace.Content = fmt.Sprintf("%s %d ", occupiedWorkspace, currentWorkspace)
+//		}
+
 		modules[0] = workspace
 		renderChannel <- modules
     }
@@ -137,7 +145,7 @@ func RenderModules(modules []Module) {
 			alignment = modules[i].Align
 			switch modules[i].Align {
 			case Left:
-				fmt.Print("%{l}")
+				fmt.Print("%{l} ")
 			case Center:
 				fmt.Print("%{c}")
 			case Right:
