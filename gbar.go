@@ -57,6 +57,45 @@ func Statistics(renderChannel chan []Module) {
 	}
 }
 
+func CurrentWorkspace(renderChannel chan []Module) {
+	workspace := Module{ ID: 2, Align: Right, Content: "" }
+	modules := make([]Module, 1)
+
+	subscription := exec.Command("bspc", "query", "-D", "-d", "focused", "--names")
+	subscriptionPipe, err := subscription.StdoutPipe()
+
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "Failed establishing pipe to bspc", err)
+		return
+	}
+
+	subscriptionScanner := bufio.NewScanner(subscriptionPipe)
+
+	subscription.Start()
+
+	// block for changes. When a change arrives, update it and push to the bar
+	for subscriptionScanner.Scan() {
+		workspace.Content = fmt.Sprintf("[%s]", scanner.Text())
+		modules[0] = workspace
+		renderChannel <- modules
+    }
+}
+
+/*
+Example of a module:
+
+func Test(renderChannel chan []Module) {
+	i := 0
+	for {
+		testModules := make([]Module, 1)
+		testModules[0] = Module{ ID: 3, Name: "Test", Align: Right, Content: fmt.Sprintf("Current: %d", i) }
+		renderChannel <- testModules
+		i = i + 1
+		time.Sleep(time.Second / 2)
+	}
+}
+*/
+
 func AlignRight() {
 	fmt.Print("%{r}")
 
@@ -125,15 +164,16 @@ func main() {
 		that the ordering is correct
 	*/
 	configuration := []Module {
-		Module{ ID: 0, Name: "CPU", Align: Left, Content: "cpu stuff" },
-		Module{ ID: 1, Name: "Date", Align: Center, Content: "date stuff" },
-		Module{ ID: 2, Name: "Workspace", Align: Right, Content: "workspace" },
+		Module{ ID: 0, Name: "CPU", Align: Left, Content: "" },
+		Module{ ID: 1, Name: "Date", Align: Center, Content: "" },
+		Module{ ID: 2, Name: "Workspace", Align: Right, Content: "" },
 	}
 
 	go RenderStatus(renderChannel, configuration)
 
 	/* generate each module's status concurrently */
 	go Statistics(renderChannel)
+	go CurrentWorkspace(renderChannel)
 
 	select { }
 
