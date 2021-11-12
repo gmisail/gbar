@@ -4,6 +4,8 @@ import (
 	"fmt" 
 	"time"
 	"strings"
+	"bufio"
+	"os"
 	"os/exec"
 	"github.com/shirou/gopsutil/v3/cpu"
 	"github.com/shirou/gopsutil/v3/mem"
@@ -58,10 +60,19 @@ func Statistics(renderChannel chan []Module) {
 }
 
 func CurrentWorkspace(renderChannel chan []Module) {
+	workspaceIds, _ := exec.Command("bspc", "query", "-D").Output()
+	workspacesList := strings.Split(string(workspaceIds), "\n")
+
+	/* converts each desktop ID to an integer (0-9) */
+	workspaces := make(map[string]int)
+	for i, id := range workspacesList {
+		workspaces[id] = i
+	}
+
 	workspace := Module{ ID: 2, Align: Right, Content: "" }
 	modules := make([]Module, 1)
 
-	subscription := exec.Command("bspc", "query", "-D", "-d", "focused", "--names")
+	subscription := exec.Command("bspc", "subscribe", "desktop")
 	subscriptionPipe, err := subscription.StdoutPipe()
 
 	if err != nil {
@@ -70,12 +81,16 @@ func CurrentWorkspace(renderChannel chan []Module) {
 	}
 
 	subscriptionScanner := bufio.NewScanner(subscriptionPipe)
-
 	subscription.Start()
 
 	// block for changes. When a change arrives, update it and push to the bar
 	for subscriptionScanner.Scan() {
-		workspace.Content = fmt.Sprintf("[%s]", scanner.Text())
+		// split up the command into arguments
+		workspaceEvent := strings.Split(subscriptionScanner.Text(), " ")
+
+		// look up which desktop the new ID belongs to
+		currentWorkspace := workspaces[workspaceEvent[2]]
+		workspace.Content = fmt.Sprintf("[%d]", currentWorkspace)
 		modules[0] = workspace
 		renderChannel <- modules
     }
