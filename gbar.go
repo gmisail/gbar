@@ -31,6 +31,10 @@ func SetBackground(color string) {
 	fmt.Printf("%%{B%s}", color)
 }
 
+func SetColor(bg string, fg string) {
+	return fmt.Sprintf("%%{B%s}%%{F%s}", bg, fg)
+}
+
 func Button(text string, command string) {
 	fmt.Printf("%%{A:%s:}%s%%{A}", command, text)
 }
@@ -59,10 +63,8 @@ func Statistics(renderChannel chan []Module) {
 	}
 }
 
+/* watches for a BSPWM workspace changes (i.e. switching) */
 func CurrentWorkspace(renderChannel chan []Module) {
-//	occupiedWorkspace := ""
-	//emptyWorkspace := "_"
-
 	workspaceIds, _ := exec.Command("bspc", "query", "-D").Output()
 	workspacesList := strings.Split(string(workspaceIds), "\n")
 
@@ -106,38 +108,6 @@ func CurrentWorkspace(renderChannel chan []Module) {
 		modules[0] = workspace
 		renderChannel <- modules
     }
-}
-
-/*
-Example of a module:
-
-func Test(renderChannel chan []Module) {
-	i := 0
-	for {
-		testModules := make([]Module, 1)
-		testModules[0] = Module{ ID: 3, Name: "Test", Align: Right, Content: fmt.Sprintf("Current: %d", i) }
-		renderChannel <- testModules
-		i = i + 1
-		time.Sleep(time.Second / 2)
-	}
-}
-*/
-
-func AlignRight() {
-	fmt.Print("%{r}")
-
-	workspace, err := exec.Command("bspc", "query", "-D", "-d", "focused", "--names").Output()
-
-	if err != nil {
-		fmt.Println("Can't find current workspace.")
-	}
-
-	/* remove the newline from the workspace ID */
-	workspaceId := strings.TrimSuffix(string(workspace), "\n")
-
-	fmt.Printf("[%s] ", workspaceId)
-
-	Button("[App Launcher] ", "rofi -show drun")
 }
 
 // given a list of modules, renders their text with alignment
