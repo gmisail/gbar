@@ -35,6 +35,14 @@ func SetColor(bg string, fg string) string {
 	return fmt.Sprintf("%%{B%s}%%{F%s}", bg, fg)
 }
 
+func Underline(text string) {
+	return fmt.Sprintf("%%{+u}%s%%{-u}", text)
+}
+
+func Overline(text string) {
+	return fmt.Sprintf("%%{+o}%s%%{-o}", text)
+}
+
 func Button(text string, command string) {
 	fmt.Printf("%%{A:%s:}%s%%{A}", command, text)
 }
