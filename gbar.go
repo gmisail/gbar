@@ -27,23 +27,23 @@ type Module struct {
 	Content string
 }
 
-func SetBackground(color string) {
-	fmt.Printf("%%{B%s}", color)
-}
-
 func SetColor(bg string, fg string) string {
 	return fmt.Sprintf("%%{B%s}%%{F%s}", bg, fg)
 }
 
-func Underline(text string) {
+func Color(bg string, fg string, text string) string {
+	return SetColor(bg, fg) + text + SetColor("-", "-")
+}
+
+func Underline(text string) string {
 	return fmt.Sprintf("%%{+u}%s%%{-u}", text)
 }
 
-func Overline(text string) {
+func Overline(text string) string {
 	return fmt.Sprintf("%%{+o}%s%%{-o}", text)
 }
 
-func Button(text string, command string) {
+func Button(text string, command string) string {
 	fmt.Printf("%%{A:%s:}%s%%{A}", command, text)
 }
 
@@ -58,7 +58,7 @@ func Statistics(renderChannel chan []Module) {
 		memory, _ := mem.VirtualMemory()
 
 		systemStats.Content = ""
-		systemStats.Content += SetColor("#D6E3F8", "#000000") + "  " + SetColor("-", "-")
+		systemStats.Content += Color("#D6E3F8", "#000000", "   ")
 		systemStats.Content += SetColor("#141414", "#ffffff") + fmt.Sprintf(" %.2f%% ", cpuUsage) + SetColor("-", "-")
 
 		systemStats.Content += " "
