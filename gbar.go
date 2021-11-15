@@ -31,7 +31,7 @@ func SetBackground(color string) {
 	fmt.Printf("%%{B%s}", color)
 }
 
-func SetColor(bg string, fg string) {
+func SetColor(bg string, fg string) string {
 	return fmt.Sprintf("%%{B%s}%%{F%s}", bg, fg)
 }
 
@@ -49,10 +49,24 @@ func Statistics(renderChannel chan []Module) {
 
 		memory, _ := mem.VirtualMemory()
 
-		systemStats.Content = fmt.Sprintf("%%{B#D6E3F8}%%{F#000000}  %.2f%% %%{B-}%%{F-}%%{B#FEF5EF}%%{F#000000}  %.2f%% %%{B-}%%{F-}", cpuUsage, memory.UsedPercent)
+		systemStats.Content = ""
+		systemStats.Content += SetColor("#D6E3F8", "#000000") + "  " + SetColor("-", "-")
+		systemStats.Content += SetColor("#141414", "#ffffff") + fmt.Sprintf(" %.2f%% ", cpuUsage) + SetColor("-", "-")
+
+		systemStats.Content += " "
+
+		systemStats.Content += SetColor("#CC3F0C", "#000000") + "  " + SetColor("-", "-")
+		systemStats.Content += SetColor("#141414", "#ffffff") + fmt.Sprintf(" %.2f%% ", memory.UsedPercent) + SetColor("-", "-")
 
 		currentTime := time.Now()
-		date.Content = fmt.Sprintf(currentTime.Format(" Monday, January 2  3:04:05 PM"))
+		
+		date.Content = ""
+		date.Content += SetColor("#F3EFF5", "#000000") + "  " + SetColor("-", "-")
+		date.Content += SetColor("#141414", "#ffffff") + fmt.Sprintf(currentTime.Format(" Monday, January 2 ")) + SetColor("-", "-")
+		date.Content += " "
+
+		date.Content += SetColor("#D0C0D8", "#000000") + "  " + SetColor("-", "-")
+		date.Content += SetColor("#141414", "#ffffff") + fmt.Sprintf(currentTime.Format(" 3:04:05 PM ")) + SetColor("-", "-")
 
 		copyModules := make([]Module, 2)
 		copyModules[0] = systemStats
@@ -85,6 +99,7 @@ func CurrentWorkspace(renderChannel chan []Module) {
 		return
 	}
 
+	// subscribe to bspwm for changes
 	subscriptionScanner := bufio.NewScanner(subscriptionPipe)
 	subscription.Start()
 
