@@ -43,7 +43,7 @@ func Overline(text string) string {
 	return fmt.Sprintf("%%{+o}%s%%{-o}", text)
 }
 
-func Button(text string, command string) string {
+func Button(text string, command string) {
 	fmt.Printf("%%{A:%s:}%s%%{A}", command, text)
 }
 
@@ -58,23 +58,21 @@ func Statistics(renderChannel chan []Module) {
 		memory, _ := mem.VirtualMemory()
 
 		systemStats.Content = ""
-		systemStats.Content += Color("#D6E3F8", "#000000", "   ")
-		systemStats.Content += SetColor("#141414", "#ffffff") + fmt.Sprintf(" %.2f%% ", cpuUsage) + SetColor("-", "-")
+		systemStats.Content += Color("-", "#D6E3F8", "  ")
+		systemStats.Content += fmt.Sprintf("%.2f%% ", cpuUsage)
 
 		systemStats.Content += " "
-
-		systemStats.Content += SetColor("#CC3F0C", "#000000") + "  " + SetColor("-", "-")
-		systemStats.Content += SetColor("#141414", "#ffffff") + fmt.Sprintf(" %.2f%% ", memory.UsedPercent) + SetColor("-", "-")
+		systemStats.Content += Color("-", "#CC3F0C", "  ")
+		systemStats.Content += fmt.Sprintf("%.2f%% ", memory.UsedPercent)
 
 		currentTime := time.Now()
-		
-		date.Content = ""
-		date.Content += SetColor("#F3EFF5", "#000000") + "  " + SetColor("-", "-")
-		date.Content += SetColor("#141414", "#ffffff") + fmt.Sprintf(currentTime.Format(" Monday, January 2 ")) + SetColor("-", "-")
+
+		date.Content = Color("-", "#F3EFF5", "  ")
+		date.Content += fmt.Sprintf(currentTime.Format("Monday, January 2 "))
 		date.Content += " "
 
-		date.Content += SetColor("#D0C0D8", "#000000") + "  " + SetColor("-", "-")
-		date.Content += SetColor("#141414", "#ffffff") + fmt.Sprintf(currentTime.Format(" 3:04:05 PM ")) + SetColor("-", "-")
+		date.Content += Color("-", "#D5A021", "  ")
+		date.Content += fmt.Sprintf(currentTime.Format("3:04:05 PM ")) 
 
 		copyModules := make([]Module, 2)
 		copyModules[0] = systemStats
