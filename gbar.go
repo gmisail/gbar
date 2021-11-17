@@ -9,6 +9,7 @@ import (
 	"os/exec"
 	"github.com/shirou/gopsutil/v3/cpu"
 	"github.com/shirou/gopsutil/v3/mem"
+	"github.com/shirou/gopsutil/v3/host"
 )
 
 type Alignment int
@@ -49,12 +50,13 @@ func Button(text string, command string) {
 
 func Statistics(renderChannel chan []Module) {
 	systemStats := Module{ ID: 0, Name: "CPU_RAM", Align: Left, Content: "Default" }
-	date := Module{ ID: 1, Name: "Date", Align: Center, Content: "Default" }
+	date := Module{ ID: 2, Name: "Date", Align: Center, Content: "Default" }
+	tempMod := Module{ ID: 1, Name: "CPU_Temp", Align: Left, Content: "Default" }
 
 	for {
 		times, _ := cpu.Percent(0, false)
 		cpuUsage := times[0]
-
+		temperatures, _ := host.SensorsTemperatures()
 		memory, _ := mem.VirtualMemory()
 
 		systemStats.Content = ""
@@ -74,9 +76,21 @@ func Statistics(renderChannel chan []Module) {
 		date.Content += Color("-", "#D5A021", "  ")
 		date.Content += fmt.Sprintf(currentTime.Format("3:04:05 PM ")) 
 
-		copyModules := make([]Module, 2)
+		cpuTemperature := 0.0
+		for i := 0; i < len(temperatures); i++ {
+			if temperatures[i].SensorKey == "k10temp_tdie" {
+				cpuTemperature = temperatures[i].Temperature
+				break
+			}
+		}
+
+		tempMod.Content = Color("-", "#FCFC62", "   ")
+		tempMod.Content += fmt.Sprintf("%.2f C", cpuTemperature)
+
+		copyModules := make([]Module, 3)
 		copyModules[0] = systemStats
-		copyModules[1] = date
+		copyModules[1] = tempMod
+		copyModules[2] = date
 		renderChannel <- copyModules
 
 		time.Sleep(time.Second)
@@ -94,7 +108,7 @@ func CurrentWorkspace(renderChannel chan []Module) {
 		workspaces[id] = i
 	}
 
-	workspace := Module{ ID: 2, Align: Right, Content: "" }
+	workspace := Module{ ID: 3, Align: Right, Content: "" }
 	modules := make([]Module, 1)
 
 	subscription := exec.Command("bspc", "subscribe", "desktop")
@@ -183,8 +197,9 @@ func main() {
 	*/
 	configuration := []Module {
 		Module{ ID: 0, Name: "CPU", Align: Left, Content: "" },
-		Module{ ID: 1, Name: "Date", Align: Center, Content: "" },
-		Module{ ID: 2, Name: "Workspace", Align: Right, Content: "" },
+		Module{ ID: 1, Name: "CPU_Temp", Align: Left, Content: "" },
+		Module{ ID: 2, Name: "Date", Align: Center, Content: "" },
+		Module{ ID: 3, Name: "Workspace", Align: Right, Content: "          " },
 	}
 
 	go RenderStatus(renderChannel, configuration)
