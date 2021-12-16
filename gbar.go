@@ -202,7 +202,7 @@ func StartBar(renderer chan []Module, configuration []Module) {
 		"rofi", "-show", "p", "-modi", "p:rofi-power-menu" }
 
 	bar := exec.Command(
-		"/home/gmisail/Documents/Development/gbar/lemonbar",
+		"lemonbar",
 		"-U", "#0A0A0A",
 		"-u", "4",
 		"-B", "#0A0A0A",
