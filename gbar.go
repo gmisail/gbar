@@ -7,6 +7,7 @@ import (
 	"bufio"
 	"os"
 	"os/exec"
+	"io"
 	"github.com/shirou/gopsutil/v3/cpu"
 	"github.com/shirou/gopsutil/v3/mem"
 	"github.com/shirou/gopsutil/v3/host"
@@ -44,8 +45,8 @@ func Overline(text string) string {
 	return fmt.Sprintf("%%{+o}%s%%{-o}", text)
 }
 
-func Button(text string, command string) {
-	fmt.Printf("%%{A:%s:}%s%%{A}", command, text)
+func Button(text string, command string) string {
+	return fmt.Sprintf("%%{A:%s:}%s%%{A}", command, text)
 }
 
 func Statistics(renderChannel chan []Module) {
@@ -146,29 +147,36 @@ func CurrentWorkspace(renderChannel chan []Module) {
 }
 
 // given a list of modules, renders their text with alignment
-func RenderModules(modules []Module) {
+func RenderModules(modules []Module, stdin io.WriteCloser) {
 	var alignment Alignment = None
+	var buffer strings.Builder
 
+	// for each module, update its content
 	for i := 0; i < len(modules); i++ {
 		if modules[i].Align != alignment {
 			alignment = modules[i].Align
 			switch modules[i].Align {
 			case Left:
-				fmt.Print("%{l}")
+				buffer.WriteString("%{l}")
 			case Center:
-				fmt.Print("%{c}")
+				buffer.WriteString("%{c}")
 			case Right:
-				fmt.Print("%{r}")
+				buffer.WriteString("%{r}")
 			}
 		}
-		fmt.Print(modules[i].Content)
+
+		buffer.WriteString(modules[i].Content)
 	}
 
-	fmt.Println()
+	// end of line, updates the bar with the new data
+	buffer.WriteString("\n")
+
+	// writes the data to lemonbar's STDIN
+	io.WriteString(stdin, buffer.String())
 }
 
 /* Renders the status bar once it receives updated modules */
-func RenderStatus(renderChannel chan []Module, config []Module) {
+func RenderStatus(renderChannel chan []Module, config []Module, stdin io.WriteCloser) {
 	// date => { name: "date", content: "Feb 1 2021" }
 	var modules []Module
 
@@ -183,7 +191,54 @@ func RenderStatus(renderChannel chan []Module, config []Module) {
 			modules[module.ID] = module
 		}
 
-		RenderModules(modules)
+		RenderModules(modules, stdin)
+	}
+}
+
+// creates a lemonbar instance and connects the stdin pipe to gbar's renderer
+func StartBar(renderer chan []Module, configuration []Module) {
+	events := make(map[string] []string)
+	events["power-menu"] = []string {
+		"rofi", "-show", "p", "-modi", "p:rofi-power-menu" }
+
+	bar := exec.Command(
+		"/home/gmisail/Documents/Development/gbar/lemonbar",
+		"-U", "#0A0A0A",
+		"-u", "4",
+		"-B", "#0A0A0A",
+		"-g", "x24",
+		"-f", "Iosevka Nerd Font", "-p")
+
+	barStdout, err := bar.StdoutPipe()
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "Failed establishing stdout pipe to lemonbar", err)
+		return
+	}
+
+	barStdin, err := bar.StdinPipe()
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "Failed establishing stdin pipe to lemonbar", err)
+		barStdout.Close()
+
+		return
+	}
+
+	go RenderStatus(renderer, configuration, barStdin)
+	
+	// wait for any button events
+	barScanner := bufio.NewScanner(barStdout)
+	err = bar.Start()
+
+	if err != nil {
+		panic(err)
+	}
+
+	// listens for any events being sent by lemonbar and then processes them accordingly
+	for barScanner.Scan() {
+		if command, exists := events[barScanner.Text()]; exists {
+			eventCommand := exec.Command(command[0], command[1:]...)
+			err = eventCommand.Start()
+		}
 	}
 }
 
@@ -200,9 +255,10 @@ func main() {
 		Module{ ID: 1, Name: "CPU_Temp", Align: Left, Content: "" },
 		Module{ ID: 2, Name: "Date", Align: Center, Content: "" },
 		Module{ ID: 3, Name: "Workspace", Align: Right, Content: "          " },
+		Module{ ID: 4, Name: "Power", Align: Right, Content: Button(Color("-", "#EE4B2B", "   "), "power-menu") },
 	}
 
-	go RenderStatus(renderChannel, configuration)
+	go StartBar(renderChannel, configuration)
 
 	/* generate each module's status concurrently */
 	go Statistics(renderChannel)

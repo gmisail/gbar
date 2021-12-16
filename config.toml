@@ -1,0 +1,8 @@
+[settings]
+left = [""]
+center = [""]
+right = [""]
+
+[[module]]
+name = ""
+template = ""
