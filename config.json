@@ -1,0 +1,13 @@
+{
+	"settings": {
+		"lemonbar": "lemonbar -U #0A0A0A -u 4 -B #0A0A0A -g x24 -p",
+		"font": "Iosevka Nerd Font"
+	},
+
+	"events": [
+		{
+			"event": "power-menu",
+			"command": "rofi -show p -modi p:rofi-power-menu"
+		}
+	]
+}

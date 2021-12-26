@@ -146,6 +146,10 @@ func CurrentWorkspace(renderChannel chan []Module) {
     }
 }
 
+func Volume(renderer chan []Module) {
+
+}
+
 // given a list of modules, renders their text with alignment
 func RenderModules(modules []Module, stdin io.WriteCloser) {
 	var alignment Alignment = None
@@ -196,18 +200,21 @@ func RenderStatus(renderChannel chan []Module, config []Module, stdin io.WriteCl
 }
 
 // creates a lemonbar instance and connects the stdin pipe to gbar's renderer
-func StartBar(renderer chan []Module, configuration []Module) {
+func StartBar(renderer chan []Module, configuration []Module, config Configuration) {
 	events := make(map[string] []string)
-	events["power-menu"] = []string {
-		"rofi", "-show", "p", "-modi", "p:rofi-power-menu" }
 
-	bar := exec.Command(
-		"lemonbar",
-		"-U", "#0A0A0A",
-		"-u", "4",
-		"-B", "#0A0A0A",
-		"-g", "x24",
-		"-f", "Iosevka Nerd Font", "-p")
+	/* load events from a configuration file */
+	for _, event := range config.Events {
+		events[event.Event] = strings.Split(event.Command, " ")
+	}
+
+	barExec := strings.Split(config.Settings.Lemonbar, " ")
+
+	if len(config.Settings.Font) > 0 {
+		barExec = append(barExec, "-f", config.Settings.Font)
+	}
+
+	bar := exec.Command(barExec[0], barExec[1:]...)
 
 	barStdout, err := bar.StdoutPipe()
 	if err != nil {
@@ -245,6 +252,8 @@ func StartBar(renderer chan []Module, configuration []Module) {
 func main() {
 	renderChannel := make(chan []Module)
 
+	config := LoadConfig("config.json")
+
 	/*
 		In the RenderStatus goroutine, it will replace any of the existing blocks 
 		with ones that it receives. So, by populating it beforehand we can ensure 
@@ -258,11 +267,13 @@ func main() {
 		Module{ ID: 4, Name: "Power", Align: Right, Content: Button(Color("-", "#EE4B2B", "   "), "power-menu") },
 	}
 
-	go StartBar(renderChannel, configuration)
+	go StartBar(renderChannel, configuration, config)
 
 	/* generate each module's status concurrently */
 	go Statistics(renderChannel)
 	go CurrentWorkspace(renderChannel)
+
+	go Volume(renderChannel)
 
 	select { }
 
