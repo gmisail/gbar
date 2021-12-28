@@ -201,11 +201,12 @@ func RenderStatus(renderChannel chan []Module, config []Module, stdin io.WriteCl
 
 // creates a lemonbar instance and connects the stdin pipe to gbar's renderer
 func StartBar(renderer chan []Module, configuration []Module, config Configuration) {
-	events := make(map[string] []string)
+	buttons := make(map[string] []*exec.Cmd)
 
 	/* load events from a configuration file */
-	for _, event := range config.Events {
-		events[event.Event] = strings.Split(event.Command, " ")
+	for _, button := range config.Buttons {
+		commandArgs := strings.Split(button.OnClick, " ")
+		buttons[button.Name] = exec.Command(commandArgs[0], commandArgs[1:]...)
 	}
 
 	barExec := strings.Split(config.Settings.Lemonbar, " ")
@@ -219,6 +220,7 @@ func StartBar(renderer chan []Module, configuration []Module, config Configurati
 	barStdout, err := bar.StdoutPipe()
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "Failed establishing stdout pipe to lemonbar", err)
+
 		return
 	}
 
@@ -232,7 +234,7 @@ func StartBar(renderer chan []Module, configuration []Module, config Configurati
 
 	go RenderStatus(renderer, configuration, barStdin)
 	
-	// wait for any button events
+	// Wait for any button events
 	barScanner := bufio.NewScanner(barStdout)
 	err = bar.Start()
 
@@ -240,17 +242,16 @@ func StartBar(renderer chan []Module, configuration []Module, config Configurati
 		panic(err)
 	}
 
-	// listens for any events being sent by lemonbar and then processes them accordingly
+	// Listens for any events being sent by lemonbar and then processes them accordingly
 	for barScanner.Scan() {
 		if command, exists := events[barScanner.Text()]; exists {
-			eventCommand := exec.Command(command[0], command[1:]...)
-			err = eventCommand.Start()
+			err = command.Start()
 		}
 	}
 }
 
 func main() {
-	renderChannel := make(chan []Module)
+	renderer := make(chan []Module)
 
 	config := LoadConfig("config.json")
 
@@ -267,13 +268,13 @@ func main() {
 		Module{ ID: 4, Name: "Power", Align: Right, Content: Button(Color("-", "#EE4B2B", "   "), "power-menu") },
 	}
 
-	go StartBar(renderChannel, configuration, config)
+	go StartBar(renderer, configuration, config)
+
+	CreateBlocks(config.Blocks, renderer)
 
 	/* generate each module's status concurrently */
-	go Statistics(renderChannel)
-	go CurrentWorkspace(renderChannel)
-
-	go Volume(renderChannel)
+	go Statistics(renderer)
+	go CurrentWorkspace(renderer)
 
 	select { }
 

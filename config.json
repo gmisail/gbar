@@ -4,10 +4,38 @@
 		"font": "Iosevka Nerd Font"
 	},
 
-	"events": [
+	"template": {
+		"left": ["cpu", "ram"],
+		"center": ["date", "time"],
+		"right": ["workspaces", "power"]
+	},
+
+	"blocks": [
 		{
-			"event": "power-menu",
-			"command": "rofi -show p -modi p:rofi-power-menu"
+			"name": "cpu",
+			"module": "cpu", 
+			"template": "CPU: <cpu-percent-used>",
+			"interval": "1"
+		},
+		{
+			"name": "ram",
+			"module": "ram",
+			"interval": "1",
+			"template": "RAM: <ram-percent-used>"
+		},
+		{
+			"name": "workspaces",
+			"command": "./workspaces",
+			"template": "<output>",
+			"interval": "ondata"
+		}
+	],
+
+	"buttons": [
+		{
+			"name": "power",
+			"onclick": "rofi ...",
+			"label": "Power"
 		}
 	]
 }

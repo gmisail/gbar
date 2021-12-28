@@ -5,24 +5,17 @@ import (
 	"encoding/json"
 )
 
-/*
-	{
-		"settings": {
-			
-		},
-
-		"events": [
-			{ 
-				"event": "power-menu",
-				"command": "rofi ..."
-			}
-		]
-	}
-*/
-
 type Configuration struct {
 	Settings ConfigSettings	`json:"settings"`
-	Events []ConfigEvent `json:"events"`
+	Template ConfigTemplate `json:"template"`
+	Blocks []ConfigBlock `json:"blocks"`
+	Buttons []ConfigButton `json:"buttons"`
+}
+
+type ConfigTemplate struct {
+	Left []string `json:"left"`
+	Center []string `json:"center"`
+	Right []string `json:"right"`
 }
 
 type ConfigSettings struct {
@@ -30,9 +23,18 @@ type ConfigSettings struct {
 	Font string 		`json:"font"`
 }
 
-type ConfigEvent struct {
-	Event string 	`json:"event"`
-	Command string	`json:"command"`
+type ConfigBlock struct {
+	Name string `json:"name"`
+	Module string `json:"module"`
+	Command string `json:"command"`
+	Template string `json:"template"`
+	Interval string `json:"interval"`
+}
+
+type ConfigButton struct {
+	Name string `json:"name"`
+	Command string `json:"command"`
+	Label string `json:"label"`
 }
 
 func LoadConfig(path string) Configuration {
