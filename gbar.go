@@ -1,6 +1,8 @@
 package main
 
 import ( 
+	"blocks"
+
 	"fmt" 
 	"time"
 	"strings"
@@ -22,11 +24,9 @@ const (
 	None
 )
 
-type Module struct {
-	ID int
-	Name string
-	Align Alignment
-	Content string
+type BlockLocation struct {
+	Alignment int 
+	Order int
 }
 
 func SetColor(bg string, fg string) string {
@@ -146,30 +146,26 @@ func CurrentWorkspace(renderChannel chan []Module) {
     }
 }
 
-func Volume(renderer chan []Module) {
-
-}
-
 // given a list of modules, renders their text with alignment
-func RenderModules(modules []Module, stdin io.WriteCloser) {
-	var alignment Alignment = None
+func RenderBlocks(config *[]blocks.Blocks, stdin io.WriteCloser) {
 	var buffer strings.Builder
 
 	// for each module, update its content
-	for i := 0; i < len(modules); i++ {
-		if modules[i].Align != alignment {
-			alignment = modules[i].Align
-			switch modules[i].Align {
+	for i := 0; i < len(config); i++ {
+		switch modules[i].Align {
 			case Left:
 				buffer.WriteString("%{l}")
 			case Center:
 				buffer.WriteString("%{c}")
 			case Right:
 				buffer.WriteString("%{r}")
-			}
 		}
 
-		buffer.WriteString(modules[i].Content)
+		for _, block := range(config[i]) {
+			buffer.WriteString(modules[i].Content)
+
+			// TODO: add separators between blocks
+		}
 	}
 
 	// end of line, updates the bar with the new data
@@ -180,22 +176,30 @@ func RenderModules(modules []Module, stdin io.WriteCloser) {
 }
 
 /* Renders the status bar once it receives updated modules */
-func RenderStatus(renderChannel chan []Module, config []Module, stdin io.WriteCloser) {
-	// date => { name: "date", content: "Feb 1 2021" }
-	var modules []Module
+func RenderStatus(renderer chan []Module, config []blocks.Blocks, stdin io.WriteCloser) {
+	locations := map[string] BlockLocation
 
-	for i := 0; i < len(config); i++ {
-		modules = append(modules, config[i])
+	/*
+     *	Lookup table for block locations, avoids iterating through every block
+	 *	on update. Instead, we can use a little more memory to cache where they're stored
+	 *	for easy lookup.
+	 */
+	for i, group := range config {
+		for j, block := range group {
+			locations[block.Name] = BlockLocation{ Alignment: i, Order: j }
+		}
 	}
 
 	for {
-		updatedModules := <-renderChannel
+		updatedBlocks := <-renderer
 
-		for _, module := range updatedModules {
-			modules[module.ID] = module
+		// Update the value of a given block (or blocks)
+		for _, block := range updatedBlocks {
+			location := locations[block.Name]
+			config[location.Alignment][location.Order].Content = block.Content
 		}
 
-		RenderModules(modules, stdin)
+		RenderBlocks(&config, stdin)
 	}
 }
 
@@ -252,7 +256,6 @@ func StartBar(renderer chan []Module, configuration []Module, config Configurati
 
 func main() {
 	renderer := make(chan []Module)
-
 	config := LoadConfig("config.json")
 
 	/*
@@ -268,13 +271,24 @@ func main() {
 		Module{ ID: 4, Name: "Power", Align: Right, Content: Button(Color("-", "#EE4B2B", "   "), "power-menu") },
 	}
 
+	blocks := &blocks.Blocks{}
+
+	/* switch these with config blocks? */
+	blocks.left = []blocks.Block{ 
+		blocks.Block{ Name: "CPU", Content: "0.0%" } 
+	}
+
+	blocks.center = []blocks.Block{
+		blocks.Block{ Name: "CPU", Content: "0.0%" } 
+	}
+	
+	blocks.right = []blocks.Block{
+		blocks.Block{ Name: "CPU", Content: "0.0%" } 
+	}
+
 	go StartBar(renderer, configuration, config)
 
 	CreateBlocks(config.Blocks, renderer)
-
-	/* generate each module's status concurrently */
-	go Statistics(renderer)
-	go CurrentWorkspace(renderer)
 
 	select { }
 
