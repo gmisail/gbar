@@ -1,18 +1,19 @@
 package main
 
 import ( 
-	"blocks"
+	"gmisail.me/gbar/blocks"
+	"gmisail.me/gbar/modules"
+	"gmisail.me/gbar/config"
 
 	"fmt" 
-	"time"
 	"strings"
 	"bufio"
 	"os"
 	"os/exec"
 	"io"
-	"github.com/shirou/gopsutil/v3/cpu"
-	"github.com/shirou/gopsutil/v3/mem"
-	"github.com/shirou/gopsutil/v3/host"
+//	"github.com/shirou/gopsutil/v3/cpu"
+//	"github.com/shirou/gopsutil/v3/mem"
+//	"github.com/shirou/gopsutil/v3/host"
 )
 
 type Alignment int
@@ -48,7 +49,7 @@ func Overline(text string) string {
 func Button(text string, command string) string {
 	return fmt.Sprintf("%%{A:%s:}%s%%{A}", command, text)
 }
-
+ /*
 func Statistics(renderChannel chan []Module) {
 	systemStats := Module{ ID: 0, Name: "CPU_RAM", Align: Left, Content: "Default" }
 	date := Module{ ID: 2, Name: "Date", Align: Center, Content: "Default" }
@@ -98,12 +99,10 @@ func Statistics(renderChannel chan []Module) {
 	}
 }
 
-/* watches for a BSPWM workspace changes (i.e. switching) */
 func CurrentWorkspace(renderChannel chan []Module) {
 	workspaceIds, _ := exec.Command("bspc", "query", "-D").Output()
 	workspacesList := strings.Split(string(workspaceIds), "\n")
 
-	/* converts each desktop ID to an integer (0-9) */
 	workspaces := make(map[string]int)
 	for i, id := range workspacesList {
 		workspaces[id] = i
@@ -145,27 +144,25 @@ func CurrentWorkspace(renderChannel chan []Module) {
 		renderChannel <- modules
     }
 }
+*/
 
 // given a list of modules, renders their text with alignment
-func RenderBlocks(config *[]blocks.Blocks, stdin io.WriteCloser) {
+func RenderBlocks(config *blocks.Blocks, stdin io.WriteCloser) {
 	var buffer strings.Builder
 
-	// for each module, update its content
-	for i := 0; i < len(config); i++ {
-		switch modules[i].Align {
-			case Left:
-				buffer.WriteString("%{l}")
-			case Center:
-				buffer.WriteString("%{c}")
-			case Right:
-				buffer.WriteString("%{r}")
-		}
+	buffer.WriteString("%{l}")
+	for _, block := range config.Left {
+		buffer.WriteString(block.Content)
+	}
 
-		for _, block := range(config[i]) {
-			buffer.WriteString(modules[i].Content)
+	buffer.WriteString("%%{c}")
+	for _, block := range config.Center {
+		buffer.WriteString(block.Content)
+	}
 
-			// TODO: add separators between blocks
-		}
+	buffer.WriteString("%%{r}")
+	for _, block := range config.Right {
+		buffer.WriteString(block.Content)
 	}
 
 	// end of line, updates the bar with the new data
@@ -176,40 +173,52 @@ func RenderBlocks(config *[]blocks.Blocks, stdin io.WriteCloser) {
 }
 
 /* Renders the status bar once it receives updated modules */
-func RenderStatus(renderer chan []Module, config []blocks.Blocks, stdin io.WriteCloser) {
-	locations := map[string] BlockLocation
+func RenderStatus(renderer chan blocks.Block, blocks *blocks.Blocks, stdin io.WriteCloser) {
+	locations := make(map[string] BlockLocation)
 
 	/*
      *	Lookup table for block locations, avoids iterating through every block
 	 *	on update. Instead, we can use a little more memory to cache where they're stored
 	 *	for easy lookup.
 	 */
-	for i, group := range config {
-		for j, block := range group {
-			locations[block.Name] = BlockLocation{ Alignment: i, Order: j }
-		}
+	for i, block := range blocks.Left {
+		locations[block.Name] = BlockLocation{ Alignment: 0, Order: i }
+	}
+
+	for i, block := range blocks.Center {
+		locations[block.Name] = BlockLocation{ Alignment: 1, Order: i }
+	}
+
+	for i, block := range blocks.Right {
+		locations[block.Name] = BlockLocation{ Alignment: 2, Order: i }
 	}
 
 	for {
-		updatedBlocks := <-renderer
+		updatedBlock := <-renderer
 
 		// Update the value of a given block (or blocks)
-		for _, block := range updatedBlocks {
-			location := locations[block.Name]
-			config[location.Alignment][location.Order].Content = block.Content
+		location := locations[updatedBlock.Name]
+
+		switch location.Alignment {
+		case 0:
+			blocks.Left[location.Order].Content = updatedBlock.Content
+		case 1:
+			blocks.Center[location.Order].Content = updatedBlock.Content
+		case 2:
+			blocks.Right[location.Order].Content = updatedBlock.Content
 		}
 
-		RenderBlocks(&config, stdin)
+		RenderBlocks(blocks, stdin)
 	}
 }
 
 // creates a lemonbar instance and connects the stdin pipe to gbar's renderer
-func StartBar(renderer chan []Module, configuration []Module, config Configuration) {
-	buttons := make(map[string] []*exec.Cmd)
+func StartBar(renderer chan blocks.Block, configuration *blocks.Blocks, config config.Configuration) {
+	buttons := make(map[string] *exec.Cmd)
 
 	/* load events from a configuration file */
 	for _, button := range config.Buttons {
-		commandArgs := strings.Split(button.OnClick, " ")
+		commandArgs := strings.Split(button.Command, " ")
 		buttons[button.Name] = exec.Command(commandArgs[0], commandArgs[1:]...)
 	}
 
@@ -248,49 +257,40 @@ func StartBar(renderer chan []Module, configuration []Module, config Configurati
 
 	// Listens for any events being sent by lemonbar and then processes them accordingly
 	for barScanner.Scan() {
-		if command, exists := events[barScanner.Text()]; exists {
+		if command, exists := buttons[barScanner.Text()]; exists {
 			err = command.Start()
 		}
 	}
 }
 
 func main() {
-	renderer := make(chan []Module)
-	config := LoadConfig("config.json")
+	renderer := make(chan blocks.Block)
+	config := config.LoadConfig("config.json")
+
+	modulesConfig := make(map[string] modules.Module)
+	modulesConfig["cpu"] = modules.CPU{ Usage: 0.0 }
 
 	/*
 		In the RenderStatus goroutine, it will replace any of the existing blocks 
 		with ones that it receives. So, by populating it beforehand we can ensure 
 		that the ordering is correct
 	*/
-	configuration := []Module {
+/*	configuration := []Module {
 		Module{ ID: 0, Name: "CPU", Align: Left, Content: "" },
 		Module{ ID: 1, Name: "CPU_Temp", Align: Left, Content: "" },
 		Module{ ID: 2, Name: "Date", Align: Center, Content: "" },
 		Module{ ID: 3, Name: "Workspace", Align: Right, Content: "          " },
 		Module{ ID: 4, Name: "Power", Align: Right, Content: Button(Color("-", "#EE4B2B", "   "), "power-menu") },
-	}
+	}*/
 
-	blocks := &blocks.Blocks{}
+	blockConfig := &blocks.Blocks{}
+	blockConfig.Left = []blocks.Block{ blocks.Block{ Name: "CPU", Content: "0.0%" } }
+	blockConfig.Center = []blocks.Block{ blocks.Block{ Name: "CPU_2", Content: "0.0%" } }
+	blockConfig.Right = []blocks.Block{ blocks.Block{ Name: "CPU_3", Content: "0.0%" } }
 
-	/* switch these with config blocks? */
-	blocks.left = []blocks.Block{ 
-		blocks.Block{ Name: "CPU", Content: "0.0%" } 
-	}
+	go StartBar(renderer, blockConfig, config)
 
-	blocks.center = []blocks.Block{
-		blocks.Block{ Name: "CPU", Content: "0.0%" } 
-	}
-	
-	blocks.right = []blocks.Block{
-		blocks.Block{ Name: "CPU", Content: "0.0%" } 
-	}
-
-	go StartBar(renderer, configuration, config)
-
-	CreateBlocks(config.Blocks, renderer)
+	blocks.CreateBlocks(config.Blocks, modulesConfig, renderer)
 
 	select { }
-
-	return
 }

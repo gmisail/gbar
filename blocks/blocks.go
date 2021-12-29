@@ -1,11 +1,21 @@
 package blocks
 
-import "strconv"
+import (
+	"gmisail.me/gbar/config"
+	"gmisail.me/gbar/modules"
+
+	"os"
+	"os/exec"
+	"fmt"
+	"strings"
+	"strconv"
+	"time"
+)
 
 type Blocks struct {
-	left []Block
-	center []Block
-	right []Block
+	Left []Block
+	Center []Block
+	Right []Block
 }
 
 type Block struct {
@@ -13,19 +23,19 @@ type Block struct {
 	Content string
 }
 
-
-func CreateBlocks(blocks []ConfigBlock) *[]Block {
-	components := make([]Block, len(blocks))
-
-	for i, block := range blocks {
-		// 
-	}
+/*
+ *	Setup blocks by creating a goroutine for each
+ */
+func CreateBlocks(blocks []config.ConfigBlock, modules map[string] modules.Module, renderer chan Block) {
+	for _, block := range blocks {
+		go RunBlock(block, modules, renderer)
+	}	
 }
 
 /*
  *	Create a command from a given string
  */
-func CreateCommand(command string) *Cmd {
+func CreateCommand(command string) *exec.Cmd {
 	components := strings.Fields(command)
 	executable := components[0]
 	args := components[1:]
@@ -36,8 +46,8 @@ func CreateCommand(command string) *Cmd {
 /*
  *	Update the bar based on the STDOUT from the given command.
  */
-func UpdateOnCommandData(block ConfigBlock, renderer chan []Block) {
-	command := CreateCommand(block.Command)
+func UpdateOnCommandData(block config.ConfigBlock, renderer chan Block) {
+//	command := CreateCommand(block.Command)
 
 	// TODO: get the stdout pipe from the command and 
 	// watch for any output. When output is received, 
@@ -49,7 +59,7 @@ func UpdateOnCommandData(block ConfigBlock, renderer chan []Block) {
  *	instance, "1" will update every second while "5" will update
  *  every 5 seconds
  */
-func UpdateOnInterval(block ConfigBlock, renderer chan []Block) {
+func UpdateOnInterval(block config.ConfigBlock, modules map[string] modules.Module, renderer chan Block) {
 	interval, err := strconv.Atoi(block.Interval)
 
 	if err != nil {
@@ -58,8 +68,9 @@ func UpdateOnInterval(block ConfigBlock, renderer chan []Block) {
 	}
 
 	hasCommand := len(block.Command) > 0
-	command := hasCommand ? CreateCommand(block.Command) : nil
-		
+	//	command := hasCommand ? CreateCommand(block.Command) : nil
+	module := modules[block.Module]
+
 	// TODO: get module type and assign it to an internal module. If one does 
 	// not exist then throw an error.
 
@@ -68,22 +79,26 @@ func UpdateOnInterval(block ConfigBlock, renderer chan []Block) {
 
 	for {
 		if hasCommand {
-			content := command.Output()
+//			content := command.Output()
+		} else {
+			if module != nil {
+				content = module.Run()	
+			}
 		}
 
 		renderer <- Block{ Name: block.Name, Content: content }
-		time.Sleep(interval * time.Second)
+		time.Sleep(time.Duration(interval) * time.Second)
 	}
 }
 
-func Run(block ConfigBlock, renderer chan []Block) {
+func RunBlock(block config.ConfigBlock, modules map[string] modules.Module, renderer chan Block) {
 	/*
 	 *	If this block waits for data and has a command, then spawn a special process
 	 *	which will update the block only when the command updates
 	 */
 	if block.Interval == "ondata" && len(block.Command) > 0 {
-		UpdateOnCommandData(block)
+		UpdateOnCommandData(block, renderer)
 	} else {
-		UpdateOnInterval(block)
+		UpdateOnInterval(block, modules, renderer)
 	}
 }
