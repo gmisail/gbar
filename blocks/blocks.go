@@ -46,7 +46,7 @@ func CreateCommand(command string) *exec.Cmd {
 /*
  *	Update the bar based on the STDOUT from the given command.
  */
-func UpdateOnCommandData(block config.ConfigBlock, renderer chan Block) {
+func UpdateOnData(id string, block config.ConfigBlock, modules map[string] modules.Module, renderer chan Block) {
 //	command := CreateCommand(block.Command)
 
 	// TODO: get the stdout pipe from the command and 
@@ -63,24 +63,17 @@ func UpdateOnInterval(id string, block config.ConfigBlock, modules map[string] m
 	interval, err := strconv.Atoi(block.Interval)
 
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "Could not start block '%s' with invalid interval %s.", block.Name, block.Interval)
+		fmt.Fprintf(os.Stderr, "Could not start block '%s' with invalid interval %s.\n", block.Name, block.Interval)
 		return
 	}
 
-	hasCommand := len(block.Command) > 0
-	//	command := hasCommand ? CreateCommand(block.Command) : nil
 	module := modules[block.Module]
 
-	/* Over a given interval, either call a function or run a module and assign the bar's content */
-	content := ""
+	var content string 
 
 	for {
-		if hasCommand {
-//			content := command.Output()
-		} else {
-			if module != nil {
-				content = module.Run()	
-			}
+		if module != nil {
+			content = module.Run()	
 		}
 
 		renderer <- Block{ Name: id, Content: content }
@@ -90,12 +83,14 @@ func UpdateOnInterval(id string, block config.ConfigBlock, modules map[string] m
 
 func RunBlock(id string, block config.ConfigBlock, modules map[string] modules.Module, renderer chan Block) {
 	/*
-	 *	If this block waits for data and has a command, then spawn a special process
-	 *	which will update the block only when the command updates
+	 *	There are two types of blocks: ones that run on an interval and ones that wait for data. Since
+	 *	these are handled differently, the logic is split into two different functions.
 	 */
-	if block.Interval == "ondata" && len(block.Command) > 0 {
-		UpdateOnCommandData(block, renderer)
-	} else {
+	if block.Interval == "ondata" {
+		UpdateOnData(id, block, modules, renderer)
+	} else if len(block.Interval) > 0 {
 		UpdateOnInterval(id, block, modules, renderer)
+	} else {
+		fmt.Fprintf(os.Stderr, "Could not start block '%s': 'interval' is not set.\n", id)
 	}
 }

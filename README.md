@@ -2,21 +2,24 @@
 `gbar` is a command-line utility written in Go that feeds `lemonbar`, a status bar for Linux. It uses `goroutines` so that different modules can generate their 
 content concurrently. This means that modules that have different timers (e.g. one module can update once a second and another can update once a minute) can operate at the same time and report back changes once they're complete.
 
+Currently, all modules that you want to use must be added to the `gbar.go` file and then recompiled with `go build`. Once the executable is built, you can organize the blocks in any configuration without re-compiling by using a `config.json` file. Writing modules in Go is not only easier to integrate, but they are also much faster than traditional shell scripts. 
+
 ## Installation
 ```
-go build gbar.go
+go build
 ./gbar
 ```
 
 Note that `gbar` is completely self-contained, i.e. it will spawn the `lemonbar` process for you. 
 
-## Future
+## Features
 
 - [x] Modules
 - [x] Goroutine-based render loop
 - [x] Embedded `lemonbar` process
-- [ ] JSON configuration file (module organization, general settings, etc.)
-- [ ] Custom modules, i.e. shell scripts
+- [x] JSON configuration file (module organization, general settings, etc.)
+- [x] Custom modules, i.e. shell scripts
+	- Custom modules are written in Go, however you can run shell scripts by running it from within Go
+- [ ] Module scripting
+	- Custom modules no longer require recompilation of `gbar`, but instead use Lua / Tengo / etc...
 
-## Limitations
-Currently, executable paths are hardcoded to wherever they are on my system. This is due to how it currently does not support configuration files; to change where the paths point to, you will need to clone this repo and change the paths accordingly.

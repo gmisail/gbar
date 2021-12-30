@@ -14,13 +14,13 @@
 		"cpu": {
 			"module": "cpu",
 			"template": "",
-			"interval": "1"
+			"interval": "2"
 		},
 
 		"ram": {
 			"module": "ram",
 			"template": "",
-			"interval": "1"
+			"interval": "5"
 		},
 
 		"time": {
