@@ -19,7 +19,7 @@ Note that `gbar` is completely self-contained, i.e. it will spawn the `lemonbar`
 - [x] Embedded `lemonbar` process
 - [x] JSON configuration file (module organization, general settings, etc.)
 - [x] Custom modules, i.e. shell scripts
-	- Custom modules are written in Go, however you can run shell scripts by running it from within Go
+	- Custom modules are written in Go, however you can run shell scripts by running them from within Go 
 - [ ] Module scripting
 	- Custom modules no longer require recompilation of `gbar`, but instead use Lua / Tengo / etc...
 
