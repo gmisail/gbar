@@ -21,7 +21,7 @@ type ConfigTemplate struct {
 type ConfigSettings struct {
 	Lemonbar string 	`json:"lemonbar"`
 	Font string 		`json:"font"`
-	Seperator string 	`json:"seperator"`
+	Separator string 	`json:"separator"`
 }
 
 type ConfigBlock struct {

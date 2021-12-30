@@ -98,8 +98,6 @@ func RenderBlocks(config *blocks.Blocks, sep string, stdin io.WriteCloser) {
 		}
 	}
 
-	fmt.Println(buffer.String())
-
 	// writes the data to lemonbar's STDIN
 	io.WriteString(stdin, buffer.String())
 }
@@ -200,7 +198,7 @@ func StartBar(renderer chan blocks.Block, config config.Configuration) {
 
 	configuration := CreateBlocksFromConfig(config)	
 
-	go RenderStatus(renderer, configuration, config.Settings.Seperator, barStdin)
+	go RenderStatus(renderer, configuration, config.Settings.Separator, barStdin)
 	
 	// Wait for any button events
 	barScanner := bufio.NewScanner(barStdout)
@@ -228,7 +226,6 @@ func main() {
 	modulesConfig["time"] = modules.Time{}
 
 /*	configuration := []Module {
-		Module{ ID: 2, Name: "Date", Align: Center, Content: "" },
 		Module{ ID: 3, Name: "Workspace", Align: Right, Content: "          " },
 		Module{ ID: 4, Name: "Power", Align: Right, Content: Button(Color("-", "#EE4B2B", "   "), "power-menu") },
 	}*/

@@ -2,7 +2,7 @@
 	"settings": {
 		"lemonbar": "lemonbar -U #0A0A0A -u 4 -B #0A0A0A -g x24 -p",
 		"font": "Iosevka Nerd Font",
-		"seperator": "%{B-}%{F#1f1f1f} | %{B-}%{F-}"
+		"separator": "%{B-}%{F#1f1f1f} | %{B-}%{F-}"
 	},
 
 	"template": {
