@@ -1,31 +1,29 @@
 {
 	"settings": {
 		"lemonbar": "lemonbar -U #0A0A0A -u 4 -B #0A0A0A -g x24 -p",
-		"font": "Iosevka Nerd Font"
+		"font": "Iosevka Nerd Font",
+		"seperator": "%{B-}%{F#1f1f1f} | %{B-}%{F-}"
 	},
 
 	"template": {
 		"left": ["cpu", "ram"],
-		"center": ["date", "time"],
+		"center": ["time"],
 		"right": ["workspaces", "power"]
 	},
 
 	"blocks": {
 		"cpu": {
 			"module": "cpu",
-			"template": "",
 			"interval": "2"
 		},
 
 		"ram": {
 			"module": "ram",
-			"template": "",
 			"interval": "5"
 		},
 
 		"time": {
 			"module": "time",
-			"template": "",
 			"interval": "1"
 		},
 
