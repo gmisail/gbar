@@ -25,3 +25,45 @@ Note that `gbar` is completely self-contained, i.e. it will spawn the `lemonbar`
 - [ ] Module scripting
 	- Custom modules no longer require recompilation of `gbar`, but instead use Lua / Tengo / etc...
 
+## Configuration
+Below is an example configuration file.
+```
+{
+	"settings": {
+		"lemonbar": "lemonbar -U #0A0A0A -u 4 -B #0A0A0A -g x24 -p",
+		"font": "Iosevka Nerd Font",
+		"separator": "%{B-}%{F#1f1f1f} | %{B-}%{F-}"
+	},
+
+	"template": {
+		"left": ["cpu", "ram"],
+		"center": ["time"],
+		"right": ["workspaces", "power"]
+	},
+
+	"blocks": {
+		"cpu": {
+			"module": "cpu",
+			"interval": "2"
+		},
+
+		"ram": {
+			"module": "ram",
+			"interval": "5"
+		},
+
+		"time": {
+			"module": "time",
+			"interval": "1"
+		}
+	},
+
+	"buttons": [
+		{
+			"name": "power",
+			"onclick": "rofi ...",
+			"label": "Power"
+		}
+	]
+}
+```
