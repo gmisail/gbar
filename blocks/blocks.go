@@ -26,9 +26,9 @@ type Block struct {
 /*
  *	Setup blocks by creating a goroutine for each
  */
-func CreateBlocks(blocks []config.ConfigBlock, modules map[string] modules.Module, renderer chan Block) {
-	for _, block := range blocks {
-		go RunBlock(block, modules, renderer)
+func CreateBlocks(blocks map[string] config.ConfigBlock, modules map[string] modules.Module, renderer chan Block) {
+	for id, block := range blocks {
+		go RunBlock(id, block, modules, renderer)
 	}	
 }
 
@@ -59,7 +59,7 @@ func UpdateOnCommandData(block config.ConfigBlock, renderer chan Block) {
  *	instance, "1" will update every second while "5" will update
  *  every 5 seconds
  */
-func UpdateOnInterval(block config.ConfigBlock, modules map[string] modules.Module, renderer chan Block) {
+func UpdateOnInterval(id string, block config.ConfigBlock, modules map[string] modules.Module, renderer chan Block) {
 	interval, err := strconv.Atoi(block.Interval)
 
 	if err != nil {
@@ -70,9 +70,6 @@ func UpdateOnInterval(block config.ConfigBlock, modules map[string] modules.Modu
 	hasCommand := len(block.Command) > 0
 	//	command := hasCommand ? CreateCommand(block.Command) : nil
 	module := modules[block.Module]
-
-	// TODO: get module type and assign it to an internal module. If one does 
-	// not exist then throw an error.
 
 	/* Over a given interval, either call a function or run a module and assign the bar's content */
 	content := ""
@@ -86,12 +83,12 @@ func UpdateOnInterval(block config.ConfigBlock, modules map[string] modules.Modu
 			}
 		}
 
-		renderer <- Block{ Name: block.Name, Content: content }
+		renderer <- Block{ Name: id, Content: content }
 		time.Sleep(time.Duration(interval) * time.Second)
 	}
 }
 
-func RunBlock(block config.ConfigBlock, modules map[string] modules.Module, renderer chan Block) {
+func RunBlock(id string, block config.ConfigBlock, modules map[string] modules.Module, renderer chan Block) {
 	/*
 	 *	If this block waits for data and has a command, then spawn a special process
 	 *	which will update the block only when the command updates
@@ -99,6 +96,6 @@ func RunBlock(block config.ConfigBlock, modules map[string] modules.Module, rend
 	if block.Interval == "ondata" && len(block.Command) > 0 {
 		UpdateOnCommandData(block, renderer)
 	} else {
-		UpdateOnInterval(block, modules, renderer)
+		UpdateOnInterval(id, block, modules, renderer)
 	}
 }

@@ -10,26 +10,30 @@
 		"right": ["workspaces", "power"]
 	},
 
-	"blocks": [
-		{
-			"name": "cpu",
-			"module": "cpu", 
-			"template": "CPU: <cpu-percent-used>",
+	"blocks": {
+		"cpu": {
+			"module": "cpu",
+			"template": "",
 			"interval": "1"
 		},
-		{
-			"name": "ram",
+
+		"ram": {
 			"module": "ram",
-			"interval": "1",
-			"template": "RAM: <ram-percent-used>"
+			"template": "",
+			"interval": "1"
 		},
-		{
-			"name": "workspaces",
+
+		"time": {
+			"module": "time",
+			"template": "",
+			"interval": "1"
+		},
+
+		"workspaces": {
 			"command": "./workspaces",
-			"template": "<output>",
 			"interval": "ondata"
 		}
-	],
+	},
 
 	"buttons": [
 		{

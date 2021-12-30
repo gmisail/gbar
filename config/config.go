@@ -8,8 +8,8 @@ import (
 type Configuration struct {
 	Settings ConfigSettings	`json:"settings"`
 	Template ConfigTemplate `json:"template"`
-	Blocks []ConfigBlock `json:"blocks"`
-	Buttons []ConfigButton `json:"buttons"`
+	Blocks map[string] ConfigBlock `json:"blocks"`
+	Buttons map[string] ConfigButton `json:"buttons"`
 }
 
 type ConfigTemplate struct {

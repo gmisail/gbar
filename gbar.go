@@ -155,18 +155,20 @@ func RenderBlocks(config *blocks.Blocks, stdin io.WriteCloser) {
 		buffer.WriteString(block.Content)
 	}
 
-	buffer.WriteString("%%{c}")
+	buffer.WriteString(" %{c}")
 	for _, block := range config.Center {
 		buffer.WriteString(block.Content)
 	}
 
-	buffer.WriteString("%%{r}")
+	buffer.WriteString(" %{r}")
 	for _, block := range config.Right {
 		buffer.WriteString(block.Content)
 	}
 
 	// end of line, updates the bar with the new data
 	buffer.WriteString("\n")
+
+	fmt.Println(buffer.String())
 
 	// writes the data to lemonbar's STDIN
 	io.WriteString(stdin, buffer.String())
@@ -212,8 +214,29 @@ func RenderStatus(renderer chan blocks.Block, blocks *blocks.Blocks, stdin io.Wr
 	}
 }
 
+func CreateBlocksFromConfig(config config.Configuration) *blocks.Blocks{
+	blockConfig := &blocks.Blocks{}
+	blockConfig.Left = make([]blocks.Block, len(config.Template.Left))
+	blockConfig.Center = make([]blocks.Block, len(config.Template.Center))
+	blockConfig.Right = make([]blocks.Block, len(config.Template.Right))
+
+	for _, block := range config.Template.Left {
+		blockConfig.Left = append(blockConfig.Left, blocks.Block{ Name: block, Content: "" })
+	}
+
+	for _, block := range config.Template.Center {
+		blockConfig.Center = append(blockConfig.Center, blocks.Block{ Name: block, Content: "" })
+	}
+	
+	for _, block := range config.Template.Right {
+		blockConfig.Right = append(blockConfig.Right, blocks.Block{ Name: block, Content: "" })
+	}
+
+	return blockConfig
+}
+
 // creates a lemonbar instance and connects the stdin pipe to gbar's renderer
-func StartBar(renderer chan blocks.Block, configuration *blocks.Blocks, config config.Configuration) {
+func StartBar(renderer chan blocks.Block, config config.Configuration) {
 	buttons := make(map[string] *exec.Cmd)
 
 	/* load events from a configuration file */
@@ -245,6 +268,8 @@ func StartBar(renderer chan blocks.Block, configuration *blocks.Blocks, config c
 		return
 	}
 
+	configuration := CreateBlocksFromConfig(config)	
+
 	go RenderStatus(renderer, configuration, barStdin)
 	
 	// Wait for any button events
@@ -269,12 +294,9 @@ func main() {
 
 	modulesConfig := make(map[string] modules.Module)
 	modulesConfig["cpu"] = modules.CPU{ Usage: 0.0 }
+	modulesConfig["ram"] = modules.RAM{ Usage: 0.0 }
+	modulesConfig["time"] = modules.Time{}
 
-	/*
-		In the RenderStatus goroutine, it will replace any of the existing blocks 
-		with ones that it receives. So, by populating it beforehand we can ensure 
-		that the ordering is correct
-	*/
 /*	configuration := []Module {
 		Module{ ID: 0, Name: "CPU", Align: Left, Content: "" },
 		Module{ ID: 1, Name: "CPU_Temp", Align: Left, Content: "" },
@@ -283,12 +305,7 @@ func main() {
 		Module{ ID: 4, Name: "Power", Align: Right, Content: Button(Color("-", "#EE4B2B", "   "), "power-menu") },
 	}*/
 
-	blockConfig := &blocks.Blocks{}
-	blockConfig.Left = []blocks.Block{ blocks.Block{ Name: "CPU", Content: "0.0%" } }
-	blockConfig.Center = []blocks.Block{ blocks.Block{ Name: "CPU_2", Content: "0.0%" } }
-	blockConfig.Right = []blocks.Block{ blocks.Block{ Name: "CPU_3", Content: "0.0%" } }
-
-	go StartBar(renderer, blockConfig, config)
+	go StartBar(renderer, config)
 
 	blocks.CreateBlocks(config.Blocks, modulesConfig, renderer)
 
