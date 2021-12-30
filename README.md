@@ -4,6 +4,8 @@ content concurrently. This means that modules that have different timers (e.g. o
 
 Currently, all modules that you want to use must be added to the `gbar.go` file and then recompiled with `go build`. Once the executable is built, you can organize the blocks in any configuration without re-compiling by using a `config.json` file. 
 
+The design of your status bar consists of three parts: the template, blocks, and modules. The template defines where blocks are positioned. Blocks contain information about the chunks of your status bar, such as update intervals and modules. Modules define what is actually rendered.
+
 ## Installation
 ```
 go build
