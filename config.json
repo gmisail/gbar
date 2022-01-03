@@ -15,19 +15,19 @@
 		"cpu": {
 			"module": "cpu",
 			"interval": "2",
-			"template": "<cpu-temperature> C"
+			"template": " %{F#FCFC62}%{F-} <cpu-temperature> C"
 		},
 
 		"ram": {
 			"module": "ram",
 			"interval": "5",
-			"template": "<ram-usage-percentage>%"
+			"template": "%{F#CC3F0C}%{F-} <mem-used-percentage>%"
 		},
 
 		"time": {
 			"module": "time",
 			"interval": "1",
-			"template": "<time-hour>:<time-minute>:<time-second>"
+			"template": "%{F#D5A021}%{F-} <time-full>"
 		},
 
 		"workspaces": {
