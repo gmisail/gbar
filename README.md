@@ -4,8 +4,6 @@ content concurrently. This means that modules that have different timers (e.g. o
 
 Currently, all modules that you want to use must be added to the `gbar.go` file and then recompiled with `go build`. Once the executable is built, you can organize the blocks in any configuration without re-compiling by using a `config.json` file. 
 
-The design of your status bar consists of three parts: the template, blocks, and modules. The template defines where blocks are positioned. Blocks contain information about the chunks of your status bar, such as update intervals and modules. Modules define what is actually rendered.
-
 ## Installation
 ```
 go build
@@ -26,44 +24,4 @@ Note that `gbar` is completely self-contained, i.e. it will spawn the `lemonbar`
 	- Custom modules no longer require recompilation of `gbar`, but instead use Lua / Tengo / etc...
 
 ## Configuration
-Below is an example configuration file.
-```
-{
-	"settings": {
-		"lemonbar": "lemonbar -U #0A0A0A -u 4 -B #0A0A0A -g x24 -p",
-		"font": "Iosevka Nerd Font",
-		"separator": "%{B-}%{F#1f1f1f} | %{B-}%{F-}"
-	},
-
-	"template": {
-		"left": ["cpu", "ram"],
-		"center": ["time"],
-		"right": ["workspaces", "power"]
-	},
-
-	"blocks": {
-		"cpu": {
-			"module": "cpu",
-			"interval": "2"
-		},
-
-		"ram": {
-			"module": "ram",
-			"interval": "5"
-		},
-
-		"time": {
-			"module": "time",
-			"interval": "1"
-		}
-	},
-
-	"buttons": [
-		{
-			"name": "power",
-			"onclick": "rofi ...",
-			"label": "Power"
-		}
-	]
-}
-```
+For an example of a configuration file, refer to the `config.json` file.
