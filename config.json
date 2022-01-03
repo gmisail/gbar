@@ -14,17 +14,20 @@
 	"blocks": {
 		"cpu": {
 			"module": "cpu",
-			"interval": "2"
+			"interval": "2",
+			"template": "<cpu-temperature> C"
 		},
 
 		"ram": {
 			"module": "ram",
-			"interval": "5"
+			"interval": "5",
+			"template": "<ram-usage-percentage>%"
 		},
 
 		"time": {
 			"module": "time",
-			"interval": "1"
+			"interval": "1",
+			"template": "<time-hour>:<time-minute>:<time-second>"
 		},
 
 		"workspaces": {

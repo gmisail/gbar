@@ -2,30 +2,26 @@ package modules
 
 import (
 	"fmt"
-	"gmisail.me/gbar/style"
-//	"github.com/shirou/gopsutil/v3/cpu"
+	//"gmisail.me/gbar/style"
+	"github.com/shirou/gopsutil/v3/cpu"
 	"github.com/shirou/gopsutil/v3/host"
 )
 
-type CPU struct {
-	Usage float64
-}
+type CPU struct {}
 
 /* 
  *	Store icons and their colors so you don't need to regenerate every time
  */
-var (
+/*var (
 	CPU_ICON = style.Color("-", "#D6E3F8", "")
     CPU_TEMP_ICON = style.Color("-", "#FCFC62", "") 
-)
+)*/
 
 /*
  *	Returns the CPU usage as a percentage
  */
-func (c CPU) Run() string {
-//	times, _ := cpu.Percent(0, false)
-//	c.Usage = times[0]
-
+func (c CPU) Run() map[string] interface{} {
+	times, _ := cpu.Percent(0, false)
 	temperatures, _ := host.SensorsTemperatures()
 
 	cpuTemperature := 0.0                                                                                                                             
@@ -37,6 +33,10 @@ func (c CPU) Run() string {
  	} 
 
 	//return fmt.Sprintf("%s %.2f%% %s %2.f C", CPU_ICON, c.Usage, CPU_TEMP_ICON, cpuTemperature)
+	//return fmt.Sprintf(" %s %2.f C", CPU_TEMP_ICON, cpuTemperature)
 
-	return fmt.Sprintf(" %s %2.f C", CPU_TEMP_ICON, cpuTemperature)
+	return map[string] interface{} {
+		"cpu-usage": fmt.Sprintf("%.2f", times[0]),
+		"cpu-temperature": fmt.Sprintf("%.2f", cpuTemperature),
+	}
 }

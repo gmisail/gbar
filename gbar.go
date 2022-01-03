@@ -221,8 +221,8 @@ func main() {
 	config := config.LoadConfig("config.json")
 
 	modulesConfig := make(map[string] modules.Module)
-	modulesConfig["cpu"] = modules.CPU{ Usage: 0.0 }
-	modulesConfig["ram"] = modules.RAM{ Usage: 0.0 }
+	modulesConfig["cpu"] = modules.CPU{}
+	modulesConfig["ram"] = modules.RAM{}
 	modulesConfig["time"] = modules.Time{}
 
 /*	configuration := []Module {

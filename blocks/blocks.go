@@ -3,6 +3,7 @@ package blocks
 import (
 	"gmisail.me/gbar/config"
 	"gmisail.me/gbar/modules"
+	"github.com/valyala/fasttemplate"
 
 	"os"
 	"os/exec"
@@ -29,7 +30,7 @@ type Block struct {
 func CreateBlocks(blocks map[string] config.ConfigBlock, modules map[string] modules.Module, renderer chan Block) {
 	for id, block := range blocks {
 		go RunBlock(id, block, modules, renderer)
-	}	
+	}
 }
 
 /*
@@ -44,13 +45,22 @@ func CreateCommand(command string) *exec.Cmd {
 }
 
 /*
+ *	Substitute the values from a given module into a block's template 
+ *	and return the result
+ */
+func RenderTemplate(template string, data map[string] interface{}) string {
+	t := fasttemplate.New(template, "<", ">")
+	return t.ExecuteString(data)
+}
+
+/*
  *	Update the bar based on the STDOUT from the given command.
  */
 func UpdateOnData(id string, block config.ConfigBlock, modules map[string] modules.Module, renderer chan Block) {
 //	command := CreateCommand(block.Command)
 
-	// TODO: get the stdout pipe from the command and 
-	// watch for any output. When output is received, 
+	// TODO: get the stdout pipe from the command and
+	// watch for any output. When output is received,
 	// apply it to the given template.
 }
 
@@ -69,11 +79,11 @@ func UpdateOnInterval(id string, block config.ConfigBlock, modules map[string] m
 
 	module := modules[block.Module]
 
-	var content string 
+	var content string
 
 	for {
 		if module != nil {
-			content = module.Run()	
+			content = RenderTemplate(block.Template, module.Run())
 		}
 
 		renderer <- Block{ Name: id, Content: content }
