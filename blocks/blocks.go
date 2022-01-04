@@ -54,6 +54,23 @@ func RenderTemplate(template string, data map[string] interface{}) string {
 }
 
 /*
+ *	Handles blocks that are generated once and then never update, i.e. number of cores
+ */
+func RenderStatic(id string, block config.ConfigBlock, modules map[string] modules.Module, renderer chan Block) {
+	module := modules[block.Module]
+
+	var content string
+	
+	if module != nil {
+		content = RenderTemplate(block.Template, module.Run())
+	} else {
+		content = block.Template
+	}
+
+	renderer <- Block{ Name: id, Content: content }
+}
+
+/*
  *	Update the bar based on the STDOUT from the given command.
  */
 func UpdateOnData(id string, block config.ConfigBlock, modules map[string] modules.Module, renderer chan Block) {
@@ -84,6 +101,8 @@ func UpdateOnInterval(id string, block config.ConfigBlock, modules map[string] m
 	for {
 		if module != nil {
 			content = RenderTemplate(block.Template, module.Run())
+		} else {
+			content = block.Template
 		}
 
 		renderer <- Block{ Name: id, Content: content }
@@ -101,6 +120,6 @@ func RunBlock(id string, block config.ConfigBlock, modules map[string] modules.M
 	} else if len(block.Interval) > 0 {
 		UpdateOnInterval(id, block, modules, renderer)
 	} else {
-		fmt.Fprintf(os.Stderr, "Could not start block '%s': 'interval' is not set.\n", id)
+		RenderStatic(id, block, modules, renderer)
 	}
 }

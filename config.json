@@ -8,7 +8,7 @@
 	"template": {
 		"left": ["cpu", "ram"],
 		"center": ["time"],
-		"right": ["workspaces", "power"]
+		"right": ["test", "workspaces", "power"]
 	},
 
 	"blocks": {
@@ -28,6 +28,10 @@
 			"module": "time",
 			"interval": "1",
 			"template": "%{F#D5A021}%{F-} <time-full>"
+		},
+
+		"test": {
+			"template": "Hello world!"
 		},
 
 		"workspaces": {
