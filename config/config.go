@@ -9,7 +9,6 @@ type Configuration struct {
 	Settings ConfigSettings	`json:"settings"`
 	Template ConfigTemplate `json:"template"`
 	Blocks map[string] ConfigBlock `json:"blocks"`
-	Buttons map[string] ConfigButton `json:"buttons"`
 }
 
 type ConfigTemplate struct {
@@ -25,17 +24,10 @@ type ConfigSettings struct {
 }
 
 type ConfigBlock struct {
-	Name string `json:"name"`
 	Module string `json:"module"`
-	Command string `json:"command"`
 	Template string `json:"template"`
 	Interval string `json:"interval"`
-}
-
-type ConfigButton struct {
-	Name string `json:"name"`
-	Command string `json:"command"`
-	Label string `json:"label"`
+	OnClick string `json:"on-click"`
 }
 
 func LoadConfig(path string) Configuration {

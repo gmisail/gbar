@@ -165,12 +165,17 @@ func CreateBlocksFromConfig(config config.Configuration) *blocks.Blocks{
 
 // creates a lemonbar instance and connects the stdin pipe to gbar's renderer
 func StartBar(renderer chan blocks.Block, config config.Configuration) {
-	buttons := make(map[string] *exec.Cmd)
+	buttons := make(map[string] []string)
 
 	/* load events from a configuration file */
-	for _, button := range config.Buttons {
-		commandArgs := strings.Split(button.Command, " ")
-		buttons[button.Name] = exec.Command(commandArgs[0], commandArgs[1:]...)
+	for id, block := range config.Blocks {
+		/* ensure that the block is clickable, i.e. it has a click event */
+		if len(block.OnClick) > 0 {
+			//commandArgs := strings.Split(block.OnClick, " ")
+			buttons[id] = strings.Split(block.OnClick, " ")
+			
+			//exec.Command(commandArgs[0], commandArgs[1:]...)
+		}
 	}
 
 	barExec := strings.Split(config.Settings.Lemonbar, " ")
@@ -211,7 +216,11 @@ func StartBar(renderer chan blocks.Block, config config.Configuration) {
 	// Listens for any events being sent by lemonbar and then processes them accordingly
 	for barScanner.Scan() {
 		if command, exists := buttons[barScanner.Text()]; exists {
-			err = command.Start()
+			err = exec.Command(command[0], command[1:]...).Start()
+
+			if err != nil {
+				panic(err)
+			}
 		}
 	}
 }

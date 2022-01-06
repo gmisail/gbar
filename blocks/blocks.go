@@ -3,6 +3,7 @@ package blocks
 import (
 	"gmisail.me/gbar/config"
 	"gmisail.me/gbar/modules"
+	"gmisail.me/gbar/style"
 	"github.com/valyala/fasttemplate"
 
 	"os"
@@ -53,20 +54,28 @@ func RenderTemplate(template string, data map[string] interface{}) string {
 	return t.ExecuteString(data)
 }
 
+func RenderBlock(id string, block config.ConfigBlock, module modules.Module) string {
+	var content string = block.Template
+
+	if module != nil {
+		content = RenderTemplate(block.Template, module.Run())
+	}
+
+	/* this block is a button, so wrap it in a button with the correct click event ID */
+	if len(block.OnClick) != 0 {
+		return style.Button(content, id)
+	}
+
+	return content
+}
+
 /*
  *	Handles blocks that are generated once and then never update, i.e. number of cores
  */
 func RenderStatic(id string, block config.ConfigBlock, modules map[string] modules.Module, renderer chan Block) {
 	module := modules[block.Module]
 
-	var content string
-	
-	if module != nil {
-		content = RenderTemplate(block.Template, module.Run())
-	} else {
-		content = block.Template
-	}
-
+	var content string = RenderBlock(id, block, module) //RenderTemplate(block.Template, module.Run())
 	renderer <- Block{ Name: id, Content: content }
 }
 
@@ -90,7 +99,7 @@ func UpdateOnInterval(id string, block config.ConfigBlock, modules map[string] m
 	interval, err := strconv.Atoi(block.Interval)
 
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Could not start block '%s' with invalid interval %s.\n", block.Name, block.Interval)
+		fmt.Fprintf(os.Stderr, "Could not start block '%s' with invalid interval %s.\n", id, block.Interval)
 		return
 	}
 
@@ -99,12 +108,7 @@ func UpdateOnInterval(id string, block config.ConfigBlock, modules map[string] m
 	var content string
 
 	for {
-		if module != nil {
-			content = RenderTemplate(block.Template, module.Run())
-		} else {
-			content = block.Template
-		}
-
+		content = RenderBlock(id, block, module)
 		renderer <- Block{ Name: id, Content: content }
 		time.Sleep(time.Duration(interval) * time.Second)
 	}

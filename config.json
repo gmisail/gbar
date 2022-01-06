@@ -8,7 +8,7 @@
 	"template": {
 		"left": ["cpu", "ram"],
 		"center": ["time"],
-		"right": ["test", "workspaces", "power"]
+		"right": ["workspaces", "power"]
 	},
 
 	"blocks": {
@@ -30,8 +30,9 @@
 			"template": "%{F#D5A021}%{F-} <time-full>"
 		},
 
-		"test": {
-			"template": "Hello world!"
+		"power": {
+			"template": "%{F#EE4B2B}%{F-}",
+			"on-click": "rofi -show p -modi p:rofi-power-menu"
 		},
 
 		"workspaces": {
